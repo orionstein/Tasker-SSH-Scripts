@@ -1,0 +1,33 @@
+#!/bin/sh
+git_folder="#GIT_FOLDER_PATH#"
+branch_name="#BACKUP_BRANCH_NAME#"
+
+cd $git_files
+
+##Pull the current branch name##
+orig_branch=`git rev-parse --abbrev-ref HEAD`
+
+##Check for file changes in working dir##
+if git diff-index --quiet HEAD --; then
+        ##No results##
+	echo "There are no file changes"
+else
+        ##Add and commit files##
+	git add .
+	git commit -m "Backup from unchecked files on shutdown"
+        ##Check for existing backup branch##
+	if git show-ref --verify --quiet "refs/heads/$branch_name"; 
+	then
+		echo "Branch Exists"
+		git checkout $branch_name
+	else
+                ##Create Branch##
+		echo "New Branch"
+		git checkout -b $branch_name
+	fi
+        ##Backup Changes##
+	git push origin $branch_name
+        ##Check out to previous branch##
+	git checkout $orig_branch
+	echo "backed up changes"
+fi
